@@ -1,0 +1,6 @@
+include README.md
+include LICENSE.md
+recursive-include aidboxpy *
+recursive-include aidboxpy/schemas *.pkl
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
