@@ -9,6 +9,8 @@ from base_fhirpy.exceptions import ResourceNotFound, OperationOutcome
 class LibTestCase(TestCase):
     URL = 'http://localhost:8080'
     client = None
+    identifier = [{'system': 'http://example.com/env',
+                   'value': 'fhirpy'}]
 
     @classmethod
     def get_search_set(cls, resource_type):
@@ -35,8 +37,7 @@ class LibTestCase(TestCase):
     def create_resource(self, resource_type, **kwargs):
         p = self.client.resource(
             resource_type,
-            identifier=[{'system': 'http://example.com/env',
-                         'value': 'fhirpy'}],
+            identifier=self.identifier,
             **kwargs)
         p.save()
 
@@ -250,6 +251,41 @@ class LibTestCase(TestCase):
         resource = self.client.resource('Patient', id='p1')
         reference = self.client.reference('Patient', 'p1')
         self.assertEqual(resource, reference)
+
+    def test_bundle_path(self):
+        bundle_resource = self.client.resource('Bundle')
+        self.assertEqual(bundle_resource._get_path(), '')
+
+    def test_create_bundle(self):
+        bundle = {
+            'resourceType': 'bundle',
+            'type': 'transaction',
+            'entry': [
+                {
+                    'request': {
+                        'method': 'POST',
+                        'url': '/Patient'
+                    },
+                    'resource': {
+                        'id': 'bundle_patient_1',
+                        'identifier': self.identifier,
+                    }
+                },
+                {
+                    'request': {
+                        'method': 'POST',
+                        'url': '/Patient'
+                    },
+                    'resource': {
+                        'id': 'bundle_patient_2',
+                        'identifier': self.identifier,
+                    }
+                },
+            ],
+        }
+        bundle_resource = self.create_resource('Bundle', **bundle)
+        patient_1 = self.client.resources('Patient').get(id='bundle_patient_1')
+        patient_2 = self.client.resources('Patient').get(id='bundle_patient_2')
 
 
 class SearchSetTestCase(TestCase):
