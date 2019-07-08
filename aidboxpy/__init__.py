@@ -1,4 +1,8 @@
-from base_fhirpy import Client, SearchSet, Resource, Reference
+from fhirpy.base import (
+    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet,
+    AsyncSearchSet, SyncResource, AsyncResource, SyncReference,
+    AsyncReference
+)
 
 __title__ = 'aidbox-py'
 __version__ = '0.0.1'
@@ -10,11 +14,15 @@ __copyright__ = 'Copyright 2019 beda.software'
 VERSION = __version__
 
 
-class AidboxSearchSet(SearchSet):
+class SyncAidboxSearchSet(SyncSearchSet):
     pass
 
 
-class AidboxResource(Resource):
+class AsyncAidboxSearchSet(AsyncSearchSet):
+    pass
+
+
+class BaseAidboxResource:
     def is_reference(self, value):
         if not isinstance(value, dict):
             return False
@@ -35,7 +43,15 @@ class AidboxResource(Resource):
             return '{0}/{1}'.format(self.resource_type, self.id)
 
 
-class AidboxReference(Reference):
+class SyncAidboxResource(SyncResource, BaseAidboxResource):
+    pass
+
+
+class AsyncAidboxResource(AsyncResource, BaseAidboxResource):
+    pass
+
+
+class BaseAidboxReference:
     def get_root_keys(self):
         return ['resourceType', 'id', 'display', 'url', 'resource']
 
@@ -66,18 +82,43 @@ class AidboxReference(Reference):
         return not self.get('url')
 
 
-class AidboxClient(Client):
-    searchset_class = AidboxSearchSet
-    resource_class = AidboxResource
+class SyncAidboxReference(BaseAidboxReference, SyncReference):
+    pass
+
+
+class AsyncAidboxReference(BaseAidboxReference, AsyncReference):
+    pass
+
+
+class SyncAidboxClient(SyncAbstractClient):
+    searchset_class = SyncAidboxSearchSet
+    resource_class = SyncAidboxResource
 
     def reference(self, resource_type=None, id=None, reference=None, **kwargs):
         resource_type = kwargs.pop('resourceType', resource_type)
         if reference:
             if reference.count('/') > 1:
-                return AidboxReference(self, url=reference, **kwargs)
+                return SyncAidboxReference(self, url=reference, **kwargs)
             resource_type, id = reference.split('/')
         if not resource_type and not id:
             raise TypeError(
                 'Arguments `resource_type` and `id` or `reference`'
                 'are required')
-        return AidboxReference(self, resourceType=resource_type, id=id, **kwargs)
+        return SyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)
+
+
+class AsyncAidboxClient(AsyncAbstractClient):
+    searchset_class = AsyncAidboxSearchSet
+    resource_class = AsyncAidboxResource
+
+    def reference(self, resource_type=None, id=None, reference=None, **kwargs):
+        resource_type = kwargs.pop('resourceType', resource_type)
+        if reference:
+            if reference.count('/') > 1:
+                return AsyncAidboxReference(self, url=reference, **kwargs)
+            resource_type, id = reference.split('/')
+        if not resource_type and not id:
+            raise TypeError(
+                'Arguments `resource_type` and `id` or `reference`'
+                'are required')
+        return AsyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)

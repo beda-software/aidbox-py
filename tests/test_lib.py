@@ -1,9 +1,9 @@
 from unittest2 import TestCase
 from requests.auth import _basic_auth_str
 
-from aidboxpy import AidboxClient
-from aidboxpy import AidboxReference, AidboxResource
-from base_fhirpy.exceptions import ResourceNotFound, OperationOutcome
+from aidboxpy import SyncAidboxClient
+from aidboxpy import SyncAidboxReference, SyncAidboxResource
+from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome
 
 
 class LibTestCase(TestCase):
@@ -27,7 +27,7 @@ class LibTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = AidboxClient(cls.URL, authorization=_basic_auth_str('root', 'secret'))
+        cls.client = SyncAidboxClient(cls.URL, authorization=_basic_auth_str('root', 'secret'))
         cls.clearDb()
 
     def tearDown(self):
@@ -177,7 +177,7 @@ class LibTestCase(TestCase):
         resource = self.client.resource(
             'Patient', id='p1', name=[{'text': 'Name'}])
         resource_copy = resource.to_resource()
-        self.assertTrue(isinstance(resource_copy, AidboxResource))
+        self.assertTrue(isinstance(resource_copy, SyncAidboxResource))
         self.assertEqual(
             resource_copy.serialize(),
             {'resourceType': 'Patient',
@@ -210,7 +210,7 @@ class LibTestCase(TestCase):
     def test_to_reference_for_reference(self):
         reference = self.client.reference('Patient', 'p1')
         reference_copy = reference.to_reference(display='patient')
-        self.assertTrue(isinstance(reference_copy, AidboxReference))
+        self.assertTrue(isinstance(reference_copy, SyncAidboxReference))
         self.assertEqual(
             reference_copy.serialize(),
             {
@@ -286,118 +286,3 @@ class LibTestCase(TestCase):
         bundle_resource = self.create_resource('Bundle', **bundle)
         patient_1 = self.client.resources('Patient').get(id='bundle_patient_1')
         patient_2 = self.client.resources('Patient').get(id='bundle_patient_2')
-
-
-class SearchSetTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.client = AidboxClient('mock')
-
-    def test_search(self):
-        search_set = self.client.resources('Patient') \
-            .search(name='John,Ivan') \
-            .search(name='Smith') \
-            .search(birth_date='2010-01-01')
-        self.assertEqual(
-            search_set.params,
-            {'name': ['John,Ivan', 'Smith'],
-             'birth_date': ['2010-01-01']}
-        )
-
-    def test_sort(self):
-        search_set = self.client.resources('Patient') \
-            .sort('id').sort('deceased')
-        self.assertEqual(
-            search_set.params,
-            {'_sort': ['deceased']}
-        )
-
-    def test_page(self):
-        search_set = self.client.resources('Patient') \
-            .page(1).page(2)
-        self.assertEqual(
-            search_set.params,
-            {'page': [2]}
-        )
-
-    def test_limit(self):
-        search_set = self.client.resources('Patient') \
-            .limit(1).limit(2)
-        self.assertEqual(
-            search_set.params,
-            {'_count': [2]}
-        )
-
-    def test_elements(self):
-        search_set = self.client.resources('Patient') \
-            .elements('deceased').elements('gender')
-
-        self.assertEqual(set(search_set.params.keys()), {'_elements'})
-        self.assertEqual(len(search_set.params['_elements']), 1)
-        self.assertSetEqual(
-            set(search_set.params['_elements'][0].split(',')),
-            {'id', 'resourceType', 'gender'})
-
-    def test_elements_exclude(self):
-        search_set = self.client.resources('Patient') \
-            .elements('name', exclude=True)
-        self.assertEqual(
-            search_set.params,
-            {'_elements': ['-name']}
-        )
-
-    def test_include(self):
-        search_set = self.client.resources('Patient') \
-            .include('Patient', 'general-practitioner')
-        self.assertEqual(
-            search_set.params,
-            {'_include': ['Patient:general-practitioner']}
-        )
-
-    def test_has(self):
-        search_set = self.client.resources('Patient') \
-            .has('Observation', 'patient', 'AuditEvent', 'entity',
-                 user='id',
-                 type='test')
-        self.assertEqual(
-            search_set.params,
-            {
-                '_has:Observation:patient:_has:AuditEvent:entity:user': [
-                    'id'
-                ],
-                '_has:Observation:patient:_has:AuditEvent:entity:type': [
-                    'test'
-                ],
-            }
-        )
-
-    def test_has_failed(self):
-        with self.assertRaises(TypeError):
-            self.client.resources('Patient').has('Observation',code='code')
-
-    def test_include_multiple(self):
-        search_set = self.client.resources('Orginaztion') \
-            .include('Patient', 'general-practitioner') \
-            .include('Patient', 'organization')
-
-        self.assertEqual(
-            search_set.params,
-            {'_include': ['Patient:general-practitioner',
-                          'Patient:organization']}
-        )
-
-    def test_include_with_target(self):
-        search_set = self.client.resources('Patient') \
-            .include('Patient', 'general-practitioner', 'Organization')
-        self.assertEqual(
-            search_set.params,
-            {'_include': ['Patient:general-practitioner:Organization']}
-        )
-
-    def test_include_recursive(self):
-        search_set = self.client.resources('Patient') \
-            .include('Organization', 'partof', recursive=True)
-        self.assertEqual(
-            search_set.params,
-            {'_include:recursive': ['Organization:partof']}
-        )

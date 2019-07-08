@@ -35,7 +35,7 @@ setup(
     author_email='fhirpy@beda.software',
     packages=['aidboxpy'],
     include_package_data=True,
-    install_requires=['requests'],
+    install_requires=['requests', 'fhirpy'],
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
