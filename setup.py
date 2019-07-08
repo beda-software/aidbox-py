@@ -35,7 +35,10 @@ setup(
     author_email='fhirpy@beda.software',
     packages=['aidboxpy'],
     include_package_data=True,
-    install_requires=['requests'],
+    install_requires=[
+        'requests',
+        'fhirpy @ https://api.github.com/repos/beda-software/fhir-py/tarball/async'
+    ],
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
