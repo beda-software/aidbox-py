@@ -43,11 +43,11 @@ class BaseAidboxResource:
             return '{0}/{1}'.format(self.resource_type, self.id)
 
 
-class SyncAidboxResource(SyncResource, BaseAidboxResource):
+class SyncAidboxResource(BaseAidboxResource, SyncResource):
     pass
 
 
-class AsyncAidboxResource(AsyncResource, BaseAidboxResource):
+class AsyncAidboxResource(BaseAidboxResource, AsyncResource):
     pass
 
 
