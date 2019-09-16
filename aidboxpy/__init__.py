@@ -4,7 +4,7 @@ from fhirpy.base import (
 )
 
 __title__ = 'aidbox-py'
-__version__ = '0.0.1'
+__version__ = '1.0.0'
 __author__ = 'beda.software'
 __license__ = 'None'
 __copyright__ = 'Copyright 2019 beda.software'
