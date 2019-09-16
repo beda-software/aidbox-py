@@ -9,14 +9,13 @@ from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome
 class LibTestCase(TestCase):
     URL = 'http://localhost:8080'
     client = None
-    identifier = [{'system': 'http://example.com/env',
-                   'value': 'fhirpy'}]
+    identifier = [{'system': 'http://example.com/env', 'value': 'fhirpy'}]
 
     @classmethod
     def get_search_set(cls, resource_type):
-        return cls.client.resources(resource_type).search(**{
-            'identifier': 'fhirpy'
-        })
+        return cls.client.resources(resource_type).search(
+            **{'identifier': 'fhirpy'}
+        )
 
     @classmethod
     def clearDb(cls):
@@ -27,7 +26,9 @@ class LibTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = SyncAidboxClient(cls.URL, authorization=_basic_auth_str('root', 'secret'))
+        cls.client = SyncAidboxClient(
+            cls.URL, authorization=_basic_auth_str('root', 'secret')
+        )
         cls.clearDb()
 
     def tearDown(self):
@@ -36,18 +37,18 @@ class LibTestCase(TestCase):
 
     def create_resource(self, resource_type, **kwargs):
         p = self.client.resource(
-            resource_type,
-            identifier=self.identifier,
-            **kwargs)
+            resource_type, identifier=self.identifier, **kwargs
+        )
         p.save()
 
         return p
 
     def test_create_patient(self):
         self.create_resource(
-            'Patient',
-            id='patient',
-            name=[{'text': 'My patient'}])
+            'Patient', id='patient', name=[{
+                'text': 'My patient'
+            }]
+        )
 
         patient = self.client.resources('Patient').get('patient')
         self.assertEqual(patient['name'], [{'text': 'My patient'}])
@@ -58,9 +59,10 @@ class LibTestCase(TestCase):
         self.assertEqual(search_set.count(), 0)
 
         self.create_resource(
-            'Patient',
-            id='patient1',
-            name=[{'text': 'John Smith FHIRPy'}])
+            'Patient', id='patient1', name=[{
+                'text': 'John Smith FHIRPy'
+            }]
+        )
 
         self.assertEqual(search_set.count(), 1)
 
@@ -92,8 +94,7 @@ class LibTestCase(TestCase):
         self.assertEqual(resource['id'], 'p1')
         self.assertEqual(resource.reference, 'Patient/p1')
         self.assertDictEqual(
-            resource.serialize(),
-            {
+            resource.serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1',
             }
@@ -101,18 +102,15 @@ class LibTestCase(TestCase):
 
     def test_reference_from_external_reference(self):
         reference = self.client.reference(
-            reference='http://external.com/Patient/p1')
+            reference='http://external.com/Patient/p1'
+        )
         self.assertFalse(reference.is_local)
         self.assertIsNone(reference.resource_type)
         self.assertIsNone(reference.id)
         self.assertEqual(reference.reference, 'http://external.com/Patient/p1')
-        self.assertEqual(
-            reference['url'], 'http://external.com/Patient/p1')
+        self.assertEqual(reference['url'], 'http://external.com/Patient/p1')
         self.assertDictEqual(
-            reference.serialize(),
-            {
-                'url': 'http://external.com/Patient/p1'
-            }
+            reference.serialize(), {'url': 'http://external.com/Patient/p1'}
         )
 
     def test_reference_from_resource_type_and_id(self):
@@ -122,8 +120,7 @@ class LibTestCase(TestCase):
         self.assertEqual(reference.reference, 'Patient/p1')
         self.assertEqual(reference.get('url'), None)
         self.assertDictEqual(
-            reference.serialize(),
-            {
+            reference.serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1'
             }
@@ -136,8 +133,7 @@ class LibTestCase(TestCase):
         self.assertEqual(reference.reference, 'Patient/p1')
         self.assertEqual(reference.get('url'), None)
         self.assertDictEqual(
-            reference.serialize(),
-            {
+            reference.serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1'
             }
@@ -152,8 +148,7 @@ class LibTestCase(TestCase):
             self.create_resource('Patient', name='invalid')
 
     def test_to_resource_for_local_reference(self):
-        self.create_resource(
-            'Patient', id='p1', name=[{'text': 'Name'}])
+        self.create_resource('Patient', id='p1', name=[{'text': 'Name'}])
 
         patient_ref = self.client.reference('Patient', 'p1')
         result = patient_ref.to_resource().serialize()
@@ -161,28 +156,40 @@ class LibTestCase(TestCase):
         result.pop('identifier')
 
         self.assertEqual(
-            result,
-            {'resourceType': 'Patient',
-             'id': 'p1',
-             'name': [{'text': 'Name'}]})
+            result, {
+                'resourceType': 'Patient',
+                'id': 'p1',
+                'name': [{
+                    'text': 'Name'
+                }]
+            }
+        )
 
     def test_to_resource_for_external_reference(self):
         reference = self.client.reference(
-            reference='http://external.com/Patient/p1')
+            reference='http://external.com/Patient/p1'
+        )
 
         with self.assertRaises(ResourceNotFound):
             reference.to_resource()
 
     def test_to_resource_for_resource(self):
         resource = self.client.resource(
-            'Patient', id='p1', name=[{'text': 'Name'}])
+            'Patient', id='p1', name=[{
+                'text': 'Name'
+            }]
+        )
         resource_copy = resource.to_resource()
         self.assertTrue(isinstance(resource_copy, SyncAidboxResource))
         self.assertEqual(
-            resource_copy.serialize(),
-            {'resourceType': 'Patient',
-             'id': 'p1',
-             'name': [{'text': 'Name'}]})
+            resource_copy.serialize(), {
+                'resourceType': 'Patient',
+                'id': 'p1',
+                'name': [{
+                    'text': 'Name'
+                }]
+            }
+        )
 
     def test_to_reference_for_resource_without_id(self):
         resource = self.client.resource('Patient')
@@ -193,31 +200,31 @@ class LibTestCase(TestCase):
         patient = self.create_resource('Patient', id='p1')
 
         self.assertEqual(
-            patient.to_reference().serialize(),
-            {
+            patient.to_reference().serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1',
-            })
+            }
+        )
 
         self.assertEqual(
-            patient.to_reference(display='patient').serialize(),
-            {
+            patient.to_reference(display='patient').serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1',
                 'display': 'patient',
-            })
+            }
+        )
 
     def test_to_reference_for_reference(self):
         reference = self.client.reference('Patient', 'p1')
         reference_copy = reference.to_reference(display='patient')
         self.assertTrue(isinstance(reference_copy, SyncAidboxReference))
         self.assertEqual(
-            reference_copy.serialize(),
-            {
+            reference_copy.serialize(), {
                 'resourceType': 'Patient',
                 'id': 'p1',
                 'display': 'patient',
-            })
+            }
+        )
 
     def test_serialize(self):
         practitioner1 = self.client.resource('Practitioner', id='pr1')
@@ -227,25 +234,30 @@ class LibTestCase(TestCase):
             id='patient',
             generalPractitioner=[
                 practitioner1.to_reference(display='practitioner'),
-                practitioner2])
+                practitioner2
+            ]
+        )
 
         self.assertEqual(
-            patient.serialize(),
-            {
-                'resourceType': 'Patient',
-                'id': 'patient',
-                'generalPractitioner': [
-                    {
-                        'resourceType': 'Practitioner',
-                        'id': 'pr1',
-                        'display': 'practitioner',
-                    },
-                    {
-                        'resourceType': 'Practitioner',
-                        'id': 'pr2',
-                    },
-                ],
-            })
+            patient.serialize(), {
+                'resourceType':
+                    'Patient',
+                'id':
+                    'patient',
+                'generalPractitioner':
+                    [
+                        {
+                            'resourceType': 'Practitioner',
+                            'id': 'pr1',
+                            'display': 'practitioner',
+                        },
+                        {
+                            'resourceType': 'Practitioner',
+                            'id': 'pr2',
+                        },
+                    ],
+            }
+        )
 
     def test_equality(self):
         resource = self.client.resource('Patient', id='p1')
@@ -258,30 +270,35 @@ class LibTestCase(TestCase):
 
     def test_create_bundle(self):
         bundle = {
-            'resourceType': 'bundle',
-            'type': 'transaction',
-            'entry': [
-                {
-                    'request': {
-                        'method': 'POST',
-                        'url': '/Patient'
+            'resourceType':
+                'bundle',
+            'type':
+                'transaction',
+            'entry':
+                [
+                    {
+                        'request': {
+                            'method': 'POST',
+                            'url': '/Patient'
+                        },
+                        'resource':
+                            {
+                                'id': 'bundle_patient_1',
+                                'identifier': self.identifier,
+                            }
                     },
-                    'resource': {
-                        'id': 'bundle_patient_1',
-                        'identifier': self.identifier,
-                    }
-                },
-                {
-                    'request': {
-                        'method': 'POST',
-                        'url': '/Patient'
+                    {
+                        'request': {
+                            'method': 'POST',
+                            'url': '/Patient'
+                        },
+                        'resource':
+                            {
+                                'id': 'bundle_patient_2',
+                                'identifier': self.identifier,
+                            }
                     },
-                    'resource': {
-                        'id': 'bundle_patient_2',
-                        'identifier': self.identifier,
-                    }
-                },
-            ],
+                ],
         }
         bundle_resource = self.create_resource('Bundle', **bundle)
         patient_1 = self.client.resources('Patient').get(id='bundle_patient_1')

@@ -1,7 +1,6 @@
 from fhirpy.base import (
-    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet,
-    AsyncSearchSet, SyncResource, AsyncResource, SyncReference,
-    AsyncReference
+    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet,
+    SyncResource, AsyncResource, SyncReference, AsyncReference
 )
 
 __title__ = 'aidbox-py'
@@ -103,8 +102,11 @@ class SyncAidboxClient(SyncAbstractClient):
         if not resource_type and not id:
             raise TypeError(
                 'Arguments `resource_type` and `id` or `reference`'
-                'are required')
-        return SyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)
+                'are required'
+            )
+        return SyncAidboxReference(
+            self, resourceType=resource_type, id=id, **kwargs
+        )
 
 
 class AsyncAidboxClient(AsyncAbstractClient):
@@ -120,5 +122,8 @@ class AsyncAidboxClient(AsyncAbstractClient):
         if not resource_type and not id:
             raise TypeError(
                 'Arguments `resource_type` and `id` or `reference`'
-                'are required')
-        return AsyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)
+                'are required'
+            )
+        return AsyncAidboxReference(
+            self, resourceType=resource_type, id=id, **kwargs
+        )

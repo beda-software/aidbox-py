@@ -9,13 +9,13 @@ from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome
 class TestLibAsyncCase(object):
     URL = 'http://localhost:8080'
     client = None
-    identifier = [{'system': 'http://example.com/env',
-                   'value': 'fhirpy'}]
+    identifier = [{'system': 'http://example.com/env', 'value': 'fhirpy'}]
 
     @classmethod
     def get_search_set(cls, resource_type):
-        return cls.client.resources(resource_type).search(**{
-            'identifier': 'fhirpy'})
+        return cls.client.resources(resource_type).search(
+            **{'identifier': 'fhirpy'}
+        )
 
     @pytest.fixture(autouse=True)
     @pytest.mark.asyncio
@@ -28,8 +28,8 @@ class TestLibAsyncCase(object):
     @classmethod
     def setup_class(cls):
         cls.client = AsyncAidboxClient(
-            cls.URL,
-            authorization=BasicAuth('root', 'secret').encode())
+            cls.URL, authorization=BasicAuth('root', 'secret').encode()
+        )
 
     @classmethod
     def teardown_class(self):
@@ -37,9 +37,8 @@ class TestLibAsyncCase(object):
 
     async def create_resource(self, resource_type, **kwargs):
         p = self.client.resource(
-            resource_type,
-            identifier=self.identifier,
-            **kwargs)
+            resource_type, identifier=self.identifier, **kwargs
+        )
         await p.save()
 
         return p
@@ -47,9 +46,10 @@ class TestLibAsyncCase(object):
     @pytest.mark.asyncio
     async def test_create_patient(self):
         await self.create_resource(
-            'Patient',
-            id='patient',
-            name=[{'text': 'My patient'}])
+            'Patient', id='patient', name=[{
+                'text': 'My patient'
+            }]
+        )
 
         patient = await self.client.resources('Patient').get('patient')
         assert patient['name'] == [{'text': 'My patient'}]
@@ -61,9 +61,10 @@ class TestLibAsyncCase(object):
         assert await search_set.count() == 0
 
         await self.create_resource(
-            'Patient',
-            id='patient1',
-            name=[{'text': 'John Smith FHIRPy'}])
+            'Patient', id='patient1', name=[{
+                'text': 'John Smith FHIRPy'
+            }]
+        )
 
         assert await search_set.count() == 1
 
@@ -84,7 +85,9 @@ class TestLibAsyncCase(object):
     @pytest.mark.asyncio
     async def test_get_not_existing_id(self):
         with pytest.raises(ResourceNotFound):
-            await self.client.resources('Patient').get(id='FHIRPypy_not_existing_id')
+            await self.client.resources('Patient').get(
+                id='FHIRPypy_not_existing_id'
+            )
 
     def test_resource_without_resource_type_failed(self):
         with pytest.raises(TypeError):
@@ -104,7 +107,8 @@ class TestLibAsyncCase(object):
 
     def test_reference_from_external_reference(self):
         reference = self.client.reference(
-            reference='http://external.com/Patient/p1')
+            reference='http://external.com/Patient/p1'
+        )
         assert reference.is_local is False
         assert reference.resource_type is None
         assert reference.id is None
@@ -120,10 +124,7 @@ class TestLibAsyncCase(object):
         assert reference.id == 'p1'
         assert reference.reference == 'Patient/p1'
         assert reference.get('url') is None
-        assert reference.serialize() == {
-            'resourceType': 'Patient',
-            'id': 'p1'
-        }
+        assert reference.serialize() == {'resourceType': 'Patient', 'id': 'p1'}
 
     def test_reference_from_local_reference(self):
         reference = self.client.reference(reference='Patient/p1')
@@ -131,10 +132,7 @@ class TestLibAsyncCase(object):
         assert reference.id == 'p1'
         assert reference.reference == 'Patient/p1'
         assert reference.get('url') is None
-        assert reference.serialize() == {
-            'resourceType': 'Patient',
-            'id': 'p1'
-        }
+        assert reference.serialize() == {'resourceType': 'Patient', 'id': 'p1'}
 
     @pytest.mark.asyncio
     async def test_not_found_error(self):
@@ -148,8 +146,7 @@ class TestLibAsyncCase(object):
 
     @pytest.mark.asyncio
     async def test_to_resource_for_local_reference(self):
-        await self.create_resource(
-            'Patient', id='p1', name=[{'text': 'Name'}])
+        await self.create_resource('Patient', id='p1', name=[{'text': 'Name'}])
 
         patient_ref = self.client.reference('Patient', 'p1')
         result = (await patient_ref.to_resource()).serialize()
@@ -159,26 +156,35 @@ class TestLibAsyncCase(object):
         assert result == {
             'resourceType': 'Patient',
             'id': 'p1',
-            'name': [{'text': 'Name'}]
+            'name': [{
+                'text': 'Name'
+            }]
         }
 
     @pytest.mark.asyncio
     async def test_to_resource_for_external_reference(self):
         reference = self.client.reference(
-            reference='http://external.com/Patient/p1')
+            reference='http://external.com/Patient/p1'
+        )
 
         with pytest.raises(ResourceNotFound):
             await reference.to_resource()
 
     async def test_to_resource_for_resource(self):
         resource = self.client.resource(
-            'Patient', id='p1', name=[{'text': 'Name'}])
+            'Patient', id='p1', name=[{
+                'text': 'Name'
+            }]
+        )
         resource_copy = await resource.to_resource()
         assert isinstance(resource_copy, AsyncAidboxResource)
         assert resource_copy.serialize() == {
             'resourceType': 'Patient',
             'id': 'p1',
-            'name': [{'text': 'Name'}]}
+            'name': [{
+                'text': 'Name'
+            }]
+        }
 
     def test_to_reference_for_resource_without_id(self):
         resource = self.client.resource('Patient')
@@ -218,22 +224,27 @@ class TestLibAsyncCase(object):
             id='patient',
             generalPractitioner=[
                 practitioner1.to_reference(display='practitioner'),
-                practitioner2])
+                practitioner2
+            ]
+        )
 
         assert patient.serialize() == {
-            'resourceType': 'Patient',
-            'id': 'patient',
-            'generalPractitioner': [
-                {
-                    'resourceType': 'Practitioner',
-                    'id': 'pr1',
-                    'display': 'practitioner',
-                },
-                {
-                    'resourceType': 'Practitioner',
-                    'id': 'pr2',
-                },
-            ],
+            'resourceType':
+                'Patient',
+            'id':
+                'patient',
+            'generalPractitioner':
+                [
+                    {
+                        'resourceType': 'Practitioner',
+                        'id': 'pr1',
+                        'display': 'practitioner',
+                    },
+                    {
+                        'resourceType': 'Practitioner',
+                        'id': 'pr2',
+                    },
+                ],
         }
 
     def test_equality(self):
@@ -248,32 +259,40 @@ class TestLibAsyncCase(object):
     @pytest.mark.asyncio
     async def test_create_bundle(self):
         bundle = {
-            'resourceType': 'bundle',
-            'type': 'transaction',
-            'entry': [
-                {
-                    'request': {
-                        'method': 'POST',
-                        'url': '/Patient'
+            'resourceType':
+                'bundle',
+            'type':
+                'transaction',
+            'entry':
+                [
+                    {
+                        'request': {
+                            'method': 'POST',
+                            'url': '/Patient'
+                        },
+                        'resource':
+                            {
+                                'id': 'bundle_patient_1',
+                                'identifier': self.identifier,
+                            }
                     },
-                    'resource': {
-                        'id': 'bundle_patient_1',
-                        'identifier': self.identifier,
-                    }
-                },
-                {
-                    'request': {
-                        'method': 'POST',
-                        'url': '/Patient'
+                    {
+                        'request': {
+                            'method': 'POST',
+                            'url': '/Patient'
+                        },
+                        'resource':
+                            {
+                                'id': 'bundle_patient_2',
+                                'identifier': self.identifier,
+                            }
                     },
-                    'resource': {
-                        'id': 'bundle_patient_2',
-                        'identifier': self.identifier,
-                    }
-                },
-            ],
+                ],
         }
         bundle_resource = await self.create_resource('Bundle', **bundle)
-        patient_1 = await self.client.resources('Patient').get(id='bundle_patient_1')
-        patient_2 = await self.client.resources('Patient').get(id='bundle_patient_2')
-    
+        patient_1 = await self.client.resources('Patient').get(
+            id='bundle_patient_1'
+        )
+        patient_2 = await self.client.resources('Patient').get(
+            id='bundle_patient_2'
+        )
