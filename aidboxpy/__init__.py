@@ -27,7 +27,8 @@ class BaseAidboxResource:
             return False
 
         return 'resourceType' in value and ('id' in value or 'url' in value) and \
-               not (set(value.keys()) - {'resourceType', 'id', '_id', 'resource', 'display', 'url'})
+               not (set(value.keys()) - {'resourceType', 'id', '_id', 'resource', 'display', 
+                                         'uri', 'localRef', 'identifier', 'extension'})
 
     @property
     def id(self):
