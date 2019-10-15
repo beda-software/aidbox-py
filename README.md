@@ -98,3 +98,4 @@ provides:
 * .fetch_all() - makes query to the server and returns a full list of `SyncAidboxResource`/`AsyncAidboxResource`
 * .first() - returns `SyncAidboxResource`/`AsyncAidboxResource` or None
 * .get(id=id) - returns `SyncAidboxResource`/`AsyncAidboxResource` or raises `ResourceNotFound`
+* .count() - makes query to the server and returns the total number of resources that match the SearchSet
