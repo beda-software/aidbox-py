@@ -1,10 +1,10 @@
 # aidbox-py
 Aidbox client for python.
-This package provides an API for CRUD operations over Aidbox resources
+This package provides an API for CRUD operations over Aidbox resources.
 
 # Getting started
 ## Install
-`pip install git+https://github.com/beda-software/aidbox-py.git@async`
+`pip install git+https://github.com/beda-software/aidbox-py.git`
 
 ## Async example
 ```Python
@@ -51,6 +51,8 @@ if __name__ == '__main__':
     loop.run_until_complete(main())
 ```
 
+For additional examples see [fhir-py](https://github.com/beda-software/fhir-py/blob/master/README.md
+
 # API
 Import library:
 
@@ -62,11 +64,11 @@ or
 
 To create AidboxClient instance use:
 
-`SyncAidboxClient(url, authorization='', schema=None, with_cache=False)`
+`SyncAidboxClient(url, authorization='', schema=None, with_cache=False, extra_headers={})`
 
 or
 
-`AsyncAidboxClient(url, authorization='', schema=None, with_cache=False)`
+`AsyncAidboxClient(url, authorization='', schema=None, with_cache=False, extra_headers={})`
 
 Returns an instance of the connection to the server which provides:
 * .reference(resource_type, id, reference, **kwargs) - returns `SyncAidboxReference`/`AsyncAidboxReference` to the resource
@@ -76,6 +78,8 @@ Returns an instance of the connection to the server which provides:
 `SyncAidboxResource`/`AsyncAidboxResource`
 
 provides:
+* .serialize() - serializes resource
+* .get_by_path(path, default=None) – gets the value at path of resource
 * .save() - creates or updates resource instance
 * .delete() - deletes resource instance
 * .to_reference(**kwargs) - returns  `SyncAidboxReference`/`AsyncAidboxReference` for this resource
@@ -94,8 +98,10 @@ provides:
 * .sort(*args)
 * .elements(*args, exclude=False)
 * .include(resource_type, attr)
-* .fetch() - makes query to the server and returns a list of `SyncAidboxResource`/`AsyncAidboxResource`
-* .fetch_all() - makes query to the server and returns a full list of `SyncAidboxResource`/`AsyncAidboxResource`
-* .first() - returns `SyncAidboxResource`/`AsyncAidboxResource` or None
-* .get(id=id) - returns `SyncAidboxResource`/`AsyncAidboxResource` or raises `ResourceNotFound`
-* .count() - makes query to the server and returns the total number of resources that match the SearchSet
+* .revinclude(resource_type, attr, recursive=False)
+* .has(*args, **kwargs)
+* `async` .fetch() - makes query to the server and returns a list of `Resource`
+* `async` .fetch_all() - makes query to the server and returns a full list of `Resource`
+* `async` .first() - returns `Resource` or None
+* `async` .get(id=id) - returns `Resource` or raises `ResourceNotFound`
+* `async` .count() - makes query to the server and returns the total number of resources that match the SearchSet
