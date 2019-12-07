@@ -2,6 +2,13 @@
 Aidbox client for python.
 This package provides an API for CRUD operations over Aidbox resources.
 
+The library is based on fhir [fhir-py](https://github.com/beda-software/fhir-py) and the main difference between libraries in our case is the way they represent resource references (read more about [differences](https://docs.aidbox.app/basic-concepts/aidbox-and-fhir-formats)).
+
+Aidbox-py also going to support some Aidbox features like _assoc operation, AidboxQuery and so on.
+
+Most examples from [fhir-py readme](https://github.com/beda-software/fhir-py/blob/master/README.md) also work for aidbox-py (but replace client with AsyncAidboxClient/SyncAidboxClient). See base aidbox-py example below.
+
+
 # Getting started
 ## Install
 `pip install git+https://github.com/beda-software/aidbox-py.git`
@@ -10,6 +17,10 @@ This package provides an API for CRUD operations over Aidbox resources.
 ```Python
 import asyncio
 from aidboxpy import AsyncAidboxClient
+from fhirpy.base.exceptions import (
+    OperationOutcome, ResourceNotFound, MultipleResourcesFound
+)
+
 
 async def main():
     # Create an instance
@@ -21,37 +32,52 @@ async def main():
     # Search for patients
     resources = client.resources('Patient')  # Return lazy search set
     resources = resources.search(name='John').limit(10).page(2).sort('name')
-    print(await resources.fetch())  # Returns list of AsyncAidboxResource
+    patients = await resources.fetch()  # Returns a list of AsyncAidboxResource
+
+    # Get exactly one resource
+    try:
+        patient = await client.resources('Practitioner') \
+            .search(id='id').get()
+    except ResourceNotFound:
+        pass
+    except MultipleResourcesFound:
+        pass
+
+    # Validate resource
+    try:
+        await client.resource(
+            'Person',
+            custom_prop='123',
+            telecom=True
+        ).is_valid()
+    except OperationOutcome as e:
+        print('Error: {}'.format(e))
 
     # Create Organization resource
     organization = client.resource(
         'Organization',
-        name='beda.software'
+        name='beda.software',
+        active=False
     )
     await organization.save()
-
-    # Create new patient
-    await client.resource(
-        'Patient',
-        id='new_patient'
-    ).save()
 
     # Get patient resource by reference and delete
     patient_ref = client.reference('Patient', 'new_patient')
     patient_res = await patient_ref.to_resource()
     await patient_res.delete()
 
-    # Iterate over search set
-    org_resources = client.resources('Organization')
+    # Iterate over search set and change organization
+    org_resources = client.resources('Organization').search(active=False)
     async for org_resource in org_resources:
-        print(org_resource.serialize())
+        org_resource['active'] = True
+        await org_resource.save()
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
 ```
 
-For additional examples see [fhir-py](https://github.com/beda-software/fhir-py/blob/master/README.md
 
 # API
 Import library:

@@ -34,7 +34,6 @@ setup(
     packages=['aidboxpy'],
     include_package_data=True,
     install_requires=[
-        'requests',
         'fhirpy @ https://api.github.com/repos/beda-software/fhir-py/tarball'
     ],
     zip_safe=False,
