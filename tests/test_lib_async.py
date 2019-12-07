@@ -54,7 +54,9 @@ class TestLibAsyncCase(object):
     @pytest.mark.asyncio
     async def test_update_patient(self):
         patient = await self.create_resource(
-            'Patient', id='patient', name=[{'text': 'My patient'}]
+            'Patient', id='patient', name=[{
+                'text': 'My patient'
+            }]
         )
         patient['active'] = True
         patient.birthDate = '1945-01-12'

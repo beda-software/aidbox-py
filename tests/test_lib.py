@@ -54,7 +54,9 @@ class LibTestCase(TestCase):
 
     def test_update_patient(self):
         patient = self.create_resource(
-            'Patient', id='patient', name=[{'text': 'My patient'}]
+            'Patient', id='patient', name=[{
+                'text': 'My patient'
+            }]
         )
         patient['active'] = True
         patient.birthDate = '1945-01-12'
@@ -65,7 +67,9 @@ class LibTestCase(TestCase):
             .search(id='patient').get()
         self.assertTrue(check_patient.active)
         self.assertEqual(check_patient['birthDate'], '1945-01-12')
-        self.assertEqual(check_patient.get_by_path(['name', 0, 'text']), 'SomeName')
+        self.assertEqual(
+            check_patient.get_by_path(['name', 0, 'text']), 'SomeName'
+        )
 
     def test_count(self):
         search_set = self.get_search_set('Patient')

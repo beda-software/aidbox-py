@@ -104,15 +104,11 @@ class TestSearchSet(object):
 
     def test_include_wildcard(self, client):
         search_set = client.resources('MedicationDispense').include('*')
-        assert search_set.params == {
-            '_include': ['*']
-        }
+        assert search_set.params == {'_include': ['*']}
 
     def test_revinclude_wildcard(self, client):
         search_set = client.resources('MedicationDispense').revinclude('*')
-        assert search_set.params == {
-            '_revinclude': ['*']
-        }
+        assert search_set.params == {'_revinclude': ['*']}
 
     def test_include_missing_attr(self, client):
         with pytest.raises(TypeError):
@@ -120,9 +116,7 @@ class TestSearchSet(object):
 
     def test_assoc(self, client):
         search_set = client.resources('EpisodeOfCare').assoc('patient')
-        assert search_set.params == {
-            '_assoc': ['patient']
-        }
+        assert search_set.params == {'_assoc': ['patient']}
 
     def test_assoc_multiple(self, client):
         search_set = client.resources('EpisodeOfCare') \
@@ -132,7 +126,7 @@ class TestSearchSet(object):
             '_assoc': ['patient', 'managingOrganization']
         }
 
-        search_set = client.resources('EpisodeOfCare').assoc(['careManager', 'account'])
-        assert search_set.params == {
-            '_assoc': ['careManager', 'account']
-        }
+        search_set = client.resources('EpisodeOfCare').assoc(
+            ['careManager', 'account']
+        )
+        assert search_set.params == {'_assoc': ['careManager', 'account']}

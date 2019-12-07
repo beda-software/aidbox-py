@@ -1,6 +1,6 @@
 from fhirpy.base import (
-    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet, SyncResource, AsyncResource,
-    SyncReference, AsyncReference
+    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet,
+    SyncResource, AsyncResource, SyncReference, AsyncReference
 )
 
 __title__ = 'aidbox-py'
