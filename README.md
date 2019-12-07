@@ -90,11 +90,11 @@ or
 
 To create AidboxClient instance use:
 
-`SyncAidboxClient(url, authorization='', schema=None, with_cache=False, extra_headers={})`
+`SyncAidboxClient(url, authorization='', extra_headers={})`
 
 or
 
-`AsyncAidboxClient(url, authorization='', schema=None, with_cache=False, extra_headers={})`
+`AsyncAidboxClient(url, authorization='', extra_headers={})`
 
 Returns an instance of the connection to the server which provides:
 * .reference(resource_type, id, reference, **kwargs) - returns `SyncAidboxReference`/`AsyncAidboxReference` to the resource
@@ -113,7 +113,7 @@ provides:
 `SyncAidboxReference`/`AsyncAidboxReference`
 
 provides:
-* .to_resource(nocache=False) - returns `SyncAidboxResource`/`AsyncAidboxResource` for this reference
+* .to_resource() - returns `SyncAidboxResource`/`AsyncAidboxResource` for this reference
 
 `SyncAidboxSearchSet`/`AsyncAidboxSearchSet`
 
