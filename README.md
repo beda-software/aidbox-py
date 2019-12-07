@@ -2,11 +2,11 @@
 Aidbox client for python.
 This package provides an API for CRUD operations over Aidbox resources.
 
-The library is based on fhir [fhir-py](https://github.com/beda-software/fhir-py) and the main difference between libraries in our case is the way they represent resource references (read more about [differences](https://docs.aidbox.app/basic-concepts/aidbox-and-fhir-formats)).
+The library is based on [fhir-py](https://github.com/beda-software/fhir-py) and the main difference between libraries in our case is the way they represent resource references (read more about [differences](https://docs.aidbox.app/basic-concepts/aidbox-and-fhir-formats)).
 
 Aidbox-py also going to support some Aidbox features like _assoc operation, AidboxQuery and so on.
 
-Most examples from [fhir-py readme](https://github.com/beda-software/fhir-py/blob/master/README.md) also work for aidbox-py (but replace client with AsyncAidboxClient/SyncAidboxClient). See base aidbox-py example below.
+Most examples from [fhir-py readme](https://github.com/beda-software/fhir-py/blob/master/README.md) also work for aidbox-py (but you need to replace FHIR client with AsyncAidboxClient/SyncAidboxClient). See base aidbox-py example below.
 
 
 # Getting started
@@ -123,11 +123,13 @@ provides:
 * .page(page)
 * .sort(*args)
 * .elements(*args, exclude=False)
-* .include(resource_type, attr)
-* .revinclude(resource_type, attr, recursive=False)
+* .include(resource_type, attr=None, recursive=False, iterate=False)
+* .revinclude(resource_type, attr=None, recursive=False, iterate=False)
 * .has(*args, **kwargs)
-* `async` .fetch() - makes query to the server and returns a list of `Resource`
-* `async` .fetch_all() - makes query to the server and returns a full list of `Resource`
+* .assoc(elements)
+* `async` .fetch() - makes query to the server and returns a list of `Resource` filtered by resource type
+* `async` .fetch_all() - makes query to the server and returns a full list of `Resource` filtered by resource type
+* `async` .fetch_raw() - makes query to the server and returns a raw Bundle `Resource`
 * `async` .first() - returns `Resource` or None
-* `async` .get(id=id) - returns `Resource` or raises `ResourceNotFound`
+* `async` .get(id=None) - returns `Resource` or raises `ResourceNotFound` when no resource found or MultipleResourcesFound when more than one resource found (parameter 'id' is deprecated)
 * `async` .count() - makes query to the server and returns the total number of resources that match the SearchSet
