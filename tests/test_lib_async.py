@@ -3,7 +3,7 @@ from aiohttp import BasicAuth
 
 from aidboxpy import AsyncAidboxClient
 from aidboxpy import AsyncAidboxReference, AsyncAidboxResource
-from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome
+from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome, MultipleResourcesFound
 
 
 class TestLibAsyncCase(object):
@@ -31,10 +31,6 @@ class TestLibAsyncCase(object):
             cls.URL, authorization=BasicAuth('root', 'secret').encode()
         )
 
-    @classmethod
-    def teardown_class(self):
-        self.client.clear_resources_cache()
-
     async def create_resource(self, resource_type, **kwargs):
         p = self.client.resource(
             resource_type, identifier=self.identifier, **kwargs
@@ -51,8 +47,25 @@ class TestLibAsyncCase(object):
             }]
         )
 
-        patient = await self.client.resources('Patient').get('patient')
+        patient = await self.client.resources('Patient') \
+            .search(id='patient').get()
         assert patient['name'] == [{'text': 'My patient'}]
+
+    @pytest.mark.asyncio
+    async def test_update_patient(self):
+        patient = await self.create_resource(
+            'Patient', id='patient', name=[{'text': 'My patient'}]
+        )
+        patient['active'] = True
+        patient.birthDate = '1945-01-12'
+        patient.name[0].text = 'SomeName'
+        await patient.save()
+
+        check_patient = await self.client.resources('Patient') \
+            .search(id='patient').get()
+        assert check_patient.active is True
+        assert check_patient['birthDate'] == '1945-01-12'
+        assert check_patient.get_by_path(['name', 0, 'text']) == 'SomeName'
 
     @pytest.mark.asyncio
     async def test_count(self):
@@ -79,8 +92,8 @@ class TestLibAsyncCase(object):
         patient = await self.create_resource('Patient', id='patient')
         await patient.delete()
 
-        with pytest.raises(OperationOutcome):
-            await self.get_search_set('Patient').get(id='patient')
+        with pytest.raises(ResourceNotFound):
+            await self.get_search_set('Patient').search(id='patient').get()
 
     @pytest.mark.asyncio
     async def test_get_not_existing_id(self):
@@ -88,6 +101,49 @@ class TestLibAsyncCase(object):
             await self.client.resources('Patient').get(
                 id='FHIRPypy_not_existing_id'
             )
+
+    @pytest.mark.asyncio
+    async def test_get_more_than_one_resources(self):
+        await self.create_resource('Patient', birthDate='1901-05-25')
+        await self.create_resource('Patient', birthDate='1905-05-25')
+        with pytest.raises(MultipleResourcesFound):
+            await self.client.resources('Patient').get()
+        with pytest.raises(MultipleResourcesFound):
+            await self.client.resources('Patient') \
+                .search(birthdate__gt='1900').get()
+
+    @pytest.mark.asyncio
+    async def test_get_resource_by_id_is_deprecated(self):
+        await self.create_resource('Patient', id='patient', gender='male')
+        with pytest.warns(DeprecationWarning):
+            patient = await self.client.resources('Patient') \
+                .search(gender='male').get(id='patient')
+        assert patient.id == 'patient'
+
+    @pytest.mark.asyncio
+    async def test_get_resource_by_search_with_id(self):
+        await self.create_resource('Patient', id='patient', gender='male')
+        patient = await self.client.resources('Patient') \
+            .search(gender='male', id='patient').get()
+        assert patient.id == 'patient'
+        with pytest.raises(ResourceNotFound):
+            await self.client.resources('Patient') \
+                .search(gender='female', id='patient').get()
+
+    @pytest.mark.asyncio
+    async def test_get_resource_by_search(self):
+        await self.create_resource(
+            'Patient', id='patient1', gender='male', birthDate='1901-05-25'
+        )
+        await self.create_resource(
+            'Patient', id='patient2', gender='female', birthDate='1905-05-25'
+        )
+        patient_1 = await self.client.resources('Patient') \
+            .search(gender='male', birthdate='1901-05-25').get()
+        assert patient_1.id == 'patient1'
+        patient_2 = await self.client.resources('Patient') \
+            .search(gender='female', birthdate='1905-05-25').get()
+        assert patient_2.id == 'patient2'
 
     def test_resource_without_resource_type_failed(self):
         with pytest.raises(TypeError):
@@ -100,7 +156,7 @@ class TestLibAsyncCase(object):
         assert resource.id == 'p1'
         assert resource['id'] == 'p1'
         assert resource.reference == 'Patient/p1'
-        resource.serialize() == {
+        assert resource.serialize() == {
             'resourceType': 'Patient',
             'id': 'p1',
         }
@@ -170,6 +226,7 @@ class TestLibAsyncCase(object):
         with pytest.raises(ResourceNotFound):
             await reference.to_resource()
 
+    @pytest.mark.asyncio
     async def test_to_resource_for_resource(self):
         resource = self.client.resource(
             'Patient', id='p1', name=[{
@@ -290,9 +347,33 @@ class TestLibAsyncCase(object):
                 ],
         }
         bundle_resource = await self.create_resource('Bundle', **bundle)
-        patient_1 = await self.client.resources('Patient').get(
+        patient_1 = await self.client.resources('Patient').search(
             id='bundle_patient_1'
-        )
-        patient_2 = await self.client.resources('Patient').get(
+        ).get()
+        patient_2 = await self.client.resources('Patient').search(
             id='bundle_patient_2'
-        )
+        ).get()
+
+    @pytest.mark.asyncio
+    async def test_is_valid(self):
+        resource = self.client.resource
+        assert await resource('Patient', id='id123').is_valid() is True
+        assert await resource('Patient', gender='female') \
+            .is_valid(raise_exception=True) is True
+
+        assert await resource('Patient', gender=True).is_valid() is False
+        with pytest.raises(OperationOutcome):
+            await resource('Patient', gender=True) \
+                .is_valid(raise_exception=True)
+
+        assert await resource('Patient', gender='female', custom_prop='123') \
+            .is_valid() is False
+        with pytest.raises(OperationOutcome):
+            await resource('Patient', gender='female', custom_prop='123') \
+                .is_valid(raise_exception=True)
+
+        assert await resource('Patient', gender='female', custom_prop='123') \
+            .is_valid() is False
+        with pytest.raises(OperationOutcome):
+            await resource('Patient', birthDate='date', custom_prop='123', telecom=True) \
+                .is_valid(raise_exception=True)

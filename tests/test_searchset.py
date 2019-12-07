@@ -12,9 +12,9 @@ class TestSearchSet(object):
             .search(name='John,Ivan') \
             .search(name='Smith') \
             .search(birth_date='2010-01-01')
-        assert search_set.params == {
+        assert dict(search_set.params) == {
             'name': ['John,Ivan', 'Smith'],
-            'birth_date': ['2010-01-01']
+            'birth-date': ['2010-01-01']
         }
 
     def test_sort(self, client):
@@ -91,4 +91,48 @@ class TestSearchSet(object):
             .include('Organization', 'partof', recursive=True)
         assert search_set.params == {
             '_include:recursive': ['Organization:partof']
+        }
+
+    def test_include_iterate(self, client):
+        search_set = client.resources('MedicationDispense') \
+            .include('MedicationDispense', 'prescription') \
+            .include('MedicationRequest', 'performer', iterate=True)
+        assert search_set.params == {
+            '_include': ['MedicationDispense:prescription'],
+            '_include:iterate': ['MedicationRequest:performer']
+        }
+
+    def test_include_wildcard(self, client):
+        search_set = client.resources('MedicationDispense').include('*')
+        assert search_set.params == {
+            '_include': ['*']
+        }
+
+    def test_revinclude_wildcard(self, client):
+        search_set = client.resources('MedicationDispense').revinclude('*')
+        assert search_set.params == {
+            '_revinclude': ['*']
+        }
+
+    def test_include_missing_attr(self, client):
+        with pytest.raises(TypeError):
+            search_set = client.resources('Patient').include('Patient')
+
+    def test_assoc(self, client):
+        search_set = client.resources('EpisodeOfCare').assoc('patient')
+        assert search_set.params == {
+            '_assoc': ['patient']
+        }
+
+    def test_assoc_multiple(self, client):
+        search_set = client.resources('EpisodeOfCare') \
+            .assoc(['patient']) \
+            .assoc(['managingOrganization'])
+        assert search_set.params == {
+            '_assoc': ['patient', 'managingOrganization']
+        }
+
+        search_set = client.resources('EpisodeOfCare').assoc(['careManager', 'account'])
+        assert search_set.params == {
+            '_assoc': ['careManager', 'account']
         }

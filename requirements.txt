@@ -1,1 +1,8 @@
 git+https://github.com/beda-software/fhir-py.git
+# tests
+pytest==5.3.1
+pytest-cov==2.8.1
+unittest2==1.1.0
+pytest-asyncio==0.10.0
+# dev
+yapf==0.29.0

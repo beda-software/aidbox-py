@@ -1,6 +1,6 @@
 from fhirpy.base import (
-    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet,
-    SyncResource, AsyncResource, SyncReference, AsyncReference
+    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet, SyncResource, AsyncResource,
+    SyncReference, AsyncReference
 )
 
 __title__ = 'aidbox-py'
@@ -13,11 +13,16 @@ __copyright__ = 'Copyright 2019 beda.software'
 VERSION = __version__
 
 
-class SyncAidboxSearchSet(SyncSearchSet):
+class AidboxSearchSet:
+    def assoc(self, element_path):
+        return self.clone(**{'_assoc': element_path})
+
+
+class SyncAidboxSearchSet(SyncSearchSet, AidboxSearchSet):
     pass
 
 
-class AsyncAidboxSearchSet(AsyncSearchSet):
+class AsyncAidboxSearchSet(AsyncSearchSet, AidboxSearchSet):
     pass
 
 
@@ -27,7 +32,7 @@ class BaseAidboxResource:
             return False
 
         return 'resourceType' in value and ('id' in value or 'url' in value) and \
-               not (set(value.keys()) - {'resourceType', 'id', '_id', 'resource', 'display', 
+               not (set(value.keys()) - {'resourceType', 'id', '_id', 'resource', 'display',
                                          'uri', 'localRef', 'identifier', 'extension'})
 
     @property

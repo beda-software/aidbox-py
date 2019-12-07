@@ -36,6 +36,9 @@ setup(
     install_requires=[
         'fhirpy @ https://api.github.com/repos/beda-software/fhir-py/tarball'
     ],
+    tests_require=[
+        'pytest>=3.6.1', 'pytest-asyncio>=0.10.0', 'unittest2>=1.1.0'
+    ],
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
