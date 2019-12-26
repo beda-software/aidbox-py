@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/beda-software/aidbox-py.svg?branch=master)](https://travis-ci.org/beda-software/aidbox-py)
 [![codecov](https://codecov.io/gh/beda-software/aidbox-py/branch/master/graph/badge.svg)](https://codecov.io/gh/beda-software/aidbox-py)
-[![pypi](https://img.shields.io/pypi/v/aidbox.svg)](https://pypi.python.org/pypi/aidbox)
+[![pypi](https://img.shields.io/pypi/v/aidboxpy.svg)](https://pypi.python.org/pypi/aidboxpy)
 
 # aidbox-py
 Aidbox client for python.
@@ -18,7 +18,7 @@ Most examples from [fhir-py readme](https://github.com/beda-software/fhir-py/blo
 Most recent version:
 `pip install git+https://github.com/beda-software/aidbox-py.git`
 PyPi:
-`pip install aidbox`
+`pip install aidboxpy`
 
 ## Async example
 ```Python
