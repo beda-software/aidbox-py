@@ -1,7 +1,11 @@
+from abc import ABC
+
 from fhirpy.base import (
-    SyncAbstractClient, AsyncAbstractClient, SyncSearchSet, AsyncSearchSet,
+    SyncClient, AsyncClient, SyncSearchSet, AsyncSearchSet,
     SyncResource, AsyncResource, SyncReference, AsyncReference
 )
+from fhirpy.base.resource import BaseResource, BaseReference
+from fhirpy.base.searchset import AbstractSearchSet
 
 __title__ = 'aidbox-py'
 __version__ = '1.0.0'
@@ -13,7 +17,7 @@ __copyright__ = 'Copyright 2019 beda.software'
 VERSION = __version__
 
 
-class AidboxSearchSet:
+class AidboxSearchSet(AbstractSearchSet, ABC):
     def assoc(self, element_path):
         return self.clone(**{'_assoc': element_path})
 
@@ -26,7 +30,7 @@ class AsyncAidboxSearchSet(AsyncSearchSet, AidboxSearchSet):
     pass
 
 
-class BaseAidboxResource:
+class BaseAidboxResource(BaseResource, ABC):
     def is_reference(self, value):
         if not isinstance(value, dict):
             return False
@@ -56,10 +60,7 @@ class AsyncAidboxResource(BaseAidboxResource, AsyncResource):
     pass
 
 
-class BaseAidboxReference:
-    def get_root_keys(self):
-        return ['resourceType', 'id', 'display', 'url', 'resource']
-
+class BaseAidboxReference(BaseReference, ABC):
     @property
     def reference(self):
         """
@@ -95,7 +96,7 @@ class AsyncAidboxReference(BaseAidboxReference, AsyncReference):
     pass
 
 
-class SyncAidboxClient(SyncAbstractClient):
+class SyncAidboxClient(SyncClient):
     searchset_class = SyncAidboxSearchSet
     resource_class = SyncAidboxResource
 
@@ -115,7 +116,7 @@ class SyncAidboxClient(SyncAbstractClient):
         )
 
 
-class AsyncAidboxClient(AsyncAbstractClient):
+class AsyncAidboxClient(AsyncClient):
     searchset_class = AsyncAidboxSearchSet
     resource_class = AsyncAidboxResource
 
