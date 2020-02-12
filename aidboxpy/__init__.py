@@ -39,18 +39,6 @@ class BaseAidboxResource(BaseResource, ABC):
                not (set(value.keys()) - {'resourceType', 'id', '_id', 'resource', 'display',
                                          'uri', 'localRef', 'identifier', 'extension'})
 
-    @property
-    def id(self):
-        return self.get('id', None)
-
-    @property
-    def reference(self):
-        """
-        Returns reference if local resource is saved
-        """
-        if self.id:
-            return '{0}/{1}'.format(self.resource_type, self.id)
-
 
 class SyncAidboxResource(BaseAidboxResource, SyncResource):
     pass
