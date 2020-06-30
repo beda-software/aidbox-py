@@ -4,6 +4,7 @@ from aiohttp import BasicAuth
 from aidboxpy import AsyncAidboxClient
 from aidboxpy import AsyncAidboxReference, AsyncAidboxResource
 from fhirpy.base.exceptions import ResourceNotFound, OperationOutcome, MultipleResourcesFound
+from fhirpy.base.utils import AttrDict
 
 
 class TestLibAsyncCase(object):
@@ -379,3 +380,149 @@ class TestLibAsyncCase(object):
         with pytest.raises(OperationOutcome):
             await resource('Patient', birthDate='date', custom_prop='123', telecom=True) \
                 .is_valid(raise_exception=True)
+
+    @pytest.mark.asyncio
+    async def test_references_after_save(self):
+        patient = await self.create_resource(
+            'Patient', name=[{
+                'text': 'John First'
+            }]
+        )
+        practitioner = await self.create_resource(
+            'Practitioner', name=[{
+                'text': 'Jack'
+            }]
+        )
+        appointment = self.client.resource(
+            "Appointment",
+            **{
+                "status": "booked",
+                "participant": [
+                    {"actor": patient, "status": "accepted"},
+                    {"actor": practitioner, "status": "accepted"},
+                ],
+            },
+        )
+        await appointment.save()
+        assert isinstance(appointment.participant[0].actor, AsyncAidboxReference)
+        assert isinstance(appointment.participant[0], AttrDict)
+        test_patient = await appointment.participant[0].actor.to_resource()
+        assert test_patient
+
+        assert isinstance(appointment.participant[1].actor, AsyncAidboxReference)
+        assert isinstance(appointment.participant[1], AttrDict)
+        test_practitioner = await appointment.participant[1].actor.to_resource()
+        assert test_practitioner
+
+    @pytest.mark.asyncio
+    async def test_resource_execute_mapping_debug(self):
+        """
+        Specific Aidbox operation (https://docs.aidbox.app/integrations/mappings)
+        """
+        mapping = self.client.resource(
+            'Mapping',
+            body={
+                'resourceType':
+                    'Bundle',
+                'type':
+                    'transaction',
+                'entry':
+                    [
+                        {
+                            'request':
+                                {
+                                    'url': '/fhir/Patient',
+                                    'method': 'POST'
+                                },
+                            'resource':
+                                {
+                                    'resourceType':
+                                        'Patient',
+                                    'name':
+                                        [
+                                            {
+                                                'given': ['$ firstName'],
+                                                'family': '$ lastName'
+                                            }
+                                        ]
+                                }
+                        }
+                    ]
+            }
+        )
+        await mapping.save()
+        response = await mapping.execute(
+            '$debug', data={
+                'firstName': 'John',
+                'lastName': 'Smith'
+            }
+        )
+        assert response['resourceType'] == 'Bundle'
+        assert response['type'] == 'transaction'
+        assert response['entry'][0]['request'] == mapping['body']['entry'][0][
+            'request']
+        assert response['entry'][0]['resource'] == {
+            'resourceType': 'Patient',
+            'name': [{
+                'given': ['John'],
+                'family': 'Smith'
+            }]
+        }
+
+    @pytest.mark.asyncio
+    async def test_client_execute_mapping_debug(self):
+        """
+        Specific Aidbox operation (https://docs.aidbox.app/integrations/mappings)
+        """
+        mapping = {
+            'body':
+                {
+                    'resourceType':
+                        'Bundle',
+                    'type':
+                        'transaction',
+                    'entry':
+                        [
+                            {
+                                'request':
+                                    {
+                                        'url': '/fhir/Patient',
+                                        'method': 'POST'
+                                    },
+                                'resource':
+                                    {
+                                        'resourceType':
+                                            'Patient',
+                                        'name':
+                                            [
+                                                {
+                                                    'given': ['$ firstName'],
+                                                    'family': '$ lastName'
+                                                }
+                                            ]
+                                    }
+                            }
+                        ]
+                }
+        }
+        response = await self.client.execute(
+            f'Mapping/$debug',
+            data={
+                'mapping': mapping,
+                'scope': {
+                    'firstName': 'John',
+                    'lastName': 'Smith'
+                }
+            }
+        )
+        assert response['resourceType'] == 'Bundle'
+        assert response['type'] == 'transaction'
+        assert response['entry'][0]['request'] == mapping['body']['entry'][0][
+            'request']
+        assert response['entry'][0]['resource'] == {
+            'resourceType': 'Patient',
+            'name': [{
+                'given': ['John'],
+                'family': 'Smith'
+            }]
+        }

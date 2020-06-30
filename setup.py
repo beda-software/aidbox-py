@@ -34,7 +34,7 @@ setup(
     packages=['aidboxpy'],
     include_package_data=True,
     install_requires=[
-        'fhirpy==1.1.0'
+        'fhirpy>=1.1.0'
     ],
     tests_require=[
         'pytest>=3.6.1', 'pytest-asyncio>=0.10.0', 'unittest2>=1.1.0'
