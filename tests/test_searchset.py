@@ -3,132 +3,128 @@ from aidboxpy import SyncAidboxClient, AsyncAidboxClient
 
 
 @pytest.mark.parametrize(
-    'client', [SyncAidboxClient('mock'),
-               AsyncAidboxClient('mock')]
+    "client", [SyncAidboxClient("mock"), AsyncAidboxClient("mock")]
 )
 class TestSearchSet(object):
     def test_search(self, client):
-        search_set = client.resources('Patient') \
-            .search(name='John,Ivan') \
-            .search(name='Smith') \
-            .search(birth_date='2010-01-01')
+        search_set = (
+            client.resources("Patient")
+            .search(name="John,Ivan")
+            .search(name="Smith")
+            .search(birth_date="2010-01-01")
+        )
         assert dict(search_set.params) == {
-            'name': ['John,Ivan', 'Smith'],
-            'birth-date': ['2010-01-01']
+            "name": ["John,Ivan", "Smith"],
+            "birth-date": ["2010-01-01"],
         }
 
     def test_sort(self, client):
-        search_set = client.resources('Patient') \
-            .sort('id').sort('deceased')
-        assert search_set.params == {'_sort': ['deceased']}
+        search_set = client.resources("Patient").sort("id").sort("deceased")
+        assert search_set.params == {"_sort": ["deceased"]}
 
     @pytest.mark.skip(reason="investigate why it fails")
     def test_page(self, client):
         # TODO: Investigate why this test fails. Remove the test if needed
-        search_set = client.resources('Patient') \
-            .page(1).page(2)
-        assert search_set.params == {'page': [2]}
+        search_set = client.resources("Patient").page(1).page(2)
+        assert search_set.params == {"page": [2]}
 
     def test_limit(self, client):
-        search_set = client.resources('Patient') \
-            .limit(1).limit(2)
-        assert search_set.params == {'_count': [2]}
+        search_set = client.resources("Patient").limit(1).limit(2)
+        assert search_set.params == {"_count": [2]}
 
     def test_elements(self, client):
-        search_set = client.resources('Patient') \
-            .elements('deceased').elements('gender')
+        search_set = client.resources("Patient").elements("deceased").elements("gender")
 
-        assert set(search_set.params.keys()) == {'_elements'}
-        assert len(search_set.params['_elements']) == 1
-        assert set(search_set.params['_elements'][0].split(',')) == {
-            'id', 'resourceType', 'gender'
+        assert set(search_set.params.keys()) == {"_elements"}
+        assert len(search_set.params["_elements"]) == 1
+        assert set(search_set.params["_elements"][0].split(",")) == {
+            "id",
+            "resourceType",
+            "gender",
         }
 
     def test_elements_exclude(self, client):
-        search_set = client.resources('Patient') \
-            .elements('name', exclude=True)
-        assert search_set.params == {'_elements': ['-name']}
+        search_set = client.resources("Patient").elements("name", exclude=True)
+        assert search_set.params == {"_elements": ["-name"]}
 
     def test_include(self, client):
-        search_set = client.resources('Patient') \
-            .include('Patient', 'general-practitioner')
-        assert search_set.params == {
-            '_include': ['Patient:general-practitioner']
-        }
+        search_set = client.resources("Patient").include(
+            "Patient", "general-practitioner"
+        )
+        assert search_set.params == {"_include": ["Patient:general-practitioner"]}
 
     def test_has(self, client):
-        search_set = client.resources('Patient') \
-            .has('Observation', 'patient', 'AuditEvent', 'entity',
-                 user='id',
-                 type='test')
+        search_set = client.resources("Patient").has(
+            "Observation", "patient", "AuditEvent", "entity", user="id", type="test"
+        )
         assert search_set.params == {
-            '_has:Observation:patient:_has:AuditEvent:entity:user': ['id'],
-            '_has:Observation:patient:_has:AuditEvent:entity:type': ['test'],
+            "_has:Observation:patient:_has:AuditEvent:entity:user": ["id"],
+            "_has:Observation:patient:_has:AuditEvent:entity:type": ["test"],
         }
 
     def test_has_failed(self, client):
         with pytest.raises(TypeError):
-            client.resources('Patient').has('Observation', code='code')
+            client.resources("Patient").has("Observation", code="code")
 
     def test_include_multiple(self, client):
-        search_set = client.resources('Orginaztion') \
-            .include('Patient', 'general-practitioner') \
-            .include('Patient', 'organization')
+        search_set = (
+            client.resources("Orginaztion")
+            .include("Patient", "general-practitioner")
+            .include("Patient", "organization")
+        )
 
         assert search_set.params == {
-            '_include': [
-                'Patient:general-practitioner', 'Patient:organization'
-            ]
+            "_include": ["Patient:general-practitioner", "Patient:organization"]
         }
 
     def test_include_with_target(self, client):
-        search_set = client.resources('Patient') \
-            .include('Patient', 'general-practitioner', 'Organization')
+        search_set = client.resources("Patient").include(
+            "Patient", "general-practitioner", "Organization"
+        )
         assert search_set.params == {
-            '_include': ['Patient:general-practitioner:Organization']
+            "_include": ["Patient:general-practitioner:Organization"]
         }
 
     def test_include_recursive(self, client):
-        search_set = client.resources('Patient') \
-            .include('Organization', 'partof', recursive=True)
-        assert search_set.params == {
-            '_include:recursive': ['Organization:partof']
-        }
+        search_set = client.resources("Patient").include(
+            "Organization", "partof", recursive=True
+        )
+        assert search_set.params == {"_include:recursive": ["Organization:partof"]}
 
     def test_include_iterate(self, client):
-        search_set = client.resources('MedicationDispense') \
-            .include('MedicationDispense', 'prescription') \
-            .include('MedicationRequest', 'performer', iterate=True)
+        search_set = (
+            client.resources("MedicationDispense")
+            .include("MedicationDispense", "prescription")
+            .include("MedicationRequest", "performer", iterate=True)
+        )
         assert search_set.params == {
-            '_include': ['MedicationDispense:prescription'],
-            '_include:iterate': ['MedicationRequest:performer']
+            "_include": ["MedicationDispense:prescription"],
+            "_include:iterate": ["MedicationRequest:performer"],
         }
 
     def test_include_wildcard(self, client):
-        search_set = client.resources('MedicationDispense').include('*')
-        assert search_set.params == {'_include': ['*']}
+        search_set = client.resources("MedicationDispense").include("*")
+        assert search_set.params == {"_include": ["*"]}
 
     def test_revinclude_wildcard(self, client):
-        search_set = client.resources('MedicationDispense').revinclude('*')
-        assert search_set.params == {'_revinclude': ['*']}
+        search_set = client.resources("MedicationDispense").revinclude("*")
+        assert search_set.params == {"_revinclude": ["*"]}
 
     def test_include_missing_attr(self, client):
         with pytest.raises(TypeError):
-            search_set = client.resources('Patient').include('Patient')
+            search_set = client.resources("Patient").include("Patient")
 
     def test_assoc(self, client):
-        search_set = client.resources('EpisodeOfCare').assoc('patient')
-        assert search_set.params == {'_assoc': ['patient']}
+        search_set = client.resources("EpisodeOfCare").assoc("patient")
+        assert search_set.params == {"_assoc": ["patient"]}
 
     def test_assoc_multiple(self, client):
-        search_set = client.resources('EpisodeOfCare') \
-            .assoc(['patient']) \
-            .assoc(['managingOrganization'])
-        assert search_set.params == {
-            '_assoc': ['patient', 'managingOrganization']
-        }
-
-        search_set = client.resources('EpisodeOfCare').assoc(
-            ['careManager', 'account']
+        search_set = (
+            client.resources("EpisodeOfCare")
+            .assoc(["patient"])
+            .assoc(["managingOrganization"])
         )
-        assert search_set.params == {'_assoc': ['careManager', 'account']}
+        assert search_set.params == {"_assoc": ["patient", "managingOrganization"]}
+
+        search_set = client.resources("EpisodeOfCare").assoc(["careManager", "account"])
+        assert search_set.params == {"_assoc": ["careManager", "account"]}
